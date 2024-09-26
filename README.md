@@ -1,2 +1,1 @@
-# auto_drive
-lattice planner, em planner, ros, carla-simulator, 
+# Need sometime to update
