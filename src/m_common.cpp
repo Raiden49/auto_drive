@@ -132,8 +132,8 @@ FrenetPoint Cartesian2Frenet(const CarState& global_point,
   }
   return frenet_point;
 }
-FrenetPoint CalFrenet(const CarState& global_point, 
-                      const std::vector<PathPoint>& ref_path) {
+FrenetPoint GetFrenetPoint(const CarState& global_point, 
+                           const std::vector<PathPoint>& ref_path) {
   int frenet_match_index = 
       SearchMatchIndex(global_point.x, global_point.y, ref_path, 0);
   PathPoint projection_point = 

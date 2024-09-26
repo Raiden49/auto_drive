@@ -4,8 +4,8 @@
  * @Last Modified by: Raiden49
  * @Last Modified time: 2024-09-25 15:06:03
  */
-#ifndef LATTICE_NODE_HPP_
-#define LATTICE_NODE_HPP_
+#ifndef AUTO_DRIVE_PLAN_HPP_
+#define AUTO_DRIVE_PLAN_HPP_
 
 #include <memory> 
 #include <unordered_map>
@@ -29,7 +29,7 @@ class Plan {
 
     nh_.param<std::string>("role_name", role_name_, "ego_vehicle");
     nh_.param("local_length", local_length_, 50.0);
-    nh_.param("is_planner", is_planner_, true);
+    // nh_.param("is_planner", is_planner_, true);
     nh_.param("collision_dis", collision_dis_, 1.15);
 
     // lattice planner params
@@ -77,19 +77,21 @@ class Plan {
   std::shared_ptr<planner::LatticePlanner> lattice_planner_ptr_;
 
  private:
-  bool is_planner_, is_first_loop_, is_car_followed_;
-  double local_length_;
-  int pre_match_index_;
-  std::vector<PathPoint> local_path_;
-  std::vector<PathPoint> ref_path_;
-  FrenetPath final_path_;
-  FrenetPath pre_final_path_;
-  std::vector<FrenetPath> sample_paths_;
+  // bool is_planner_;
+  bool is_first_loop_;
+  bool is_car_followed_;                // 判断是否正在跟车
+  double local_length_;                 // 截取的参考线长度
+  int pre_match_index_;                 // 上一周期匹配的index
+  std::vector<PathPoint> local_path_;   // 局部参考路径
+  std::vector<PathPoint> ref_path_;     // 参考路径
+  FrenetPath final_path_;               // 最终要跟踪的路径
+  FrenetPath pre_final_path_;           // 上一周期要跟踪的路径
+  std::vector<FrenetPath> sample_paths_;// 所有采样到的路径
   std::vector<FrenetPath> history_paths_;
-  ros::Publisher local_waypoints_pub_;
+  ros::Publisher local_waypoints_pub_;  // 发送给控制器的消息
 
  private:
-  double collision_dis_;
+  double collision_dis_;                // 碰撞距离
   std::string role_name_;
   ros::NodeHandle nh_;
   std::unordered_map<std::string, double> lattice_params_;
@@ -99,4 +101,4 @@ class Plan {
 };  
 }
 
-#endif // LATTICE_NODE_HPP_
+#endif // AUTO_DRIVE_PLAN_HPP_

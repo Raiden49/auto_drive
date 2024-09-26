@@ -64,9 +64,9 @@ void CollisionDetection::ObstacleClassification(
       dynamic_obstacle_list_.push_back(obstacle);
     }
     else {
-      obstacle.point = CalFrenet(obstacle.point, ref_path_);
+      obstacle.point = GetFrenetPoint(obstacle.point, ref_path_);
       for (auto& box_point : obstacle.collision_box) {
-        box_point = CalFrenet(box_point, ref_path_);
+        box_point = GetFrenetPoint(box_point, ref_path_);
       }
       static_obstacle_list_.push_back(obstacle);
     }

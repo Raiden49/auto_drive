@@ -10,6 +10,9 @@
 #include "m_common.hpp"
 
 namespace auto_drive {
+/**
+ * @brief 在Rviz上可视化的类
+ */
 class VisualizationTool {
  public:
   VisualizationTool() = delete;

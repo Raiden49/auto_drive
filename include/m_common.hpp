@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <unordered_map>
 #include <ros/ros.h>
 #include <tf/LinearMath/Matrix3x3.h>
 #include <tf/transform_datatypes.h>
@@ -30,24 +31,66 @@
 #include "m_types.hpp"
 
 namespace auto_drive {
+/**
+ * @brief 计算欧式距离 
+ */
 double EuclideanDis(const double& x1, const double& y1, 
                     const double& x2, const double& y2);
+/**
+ * @brief 寻找路径上的最近点
+ */
 int SearchMatchIndex(const double& cur_x, const double& cur_y,
                      const std::vector<PathPoint>& way_points,
                      const int& pre_match_index);
+/**
+ * @brief Get the Projection Point object 计算投影点
+ * 
+ * @param cur_pose 当前车辆状态
+ * @param match_point 路径上匹配点也就是距离最近的点
+ * @return PathPoint Cartesian坐标下，计算出来的任意点在Cartesian轨迹上的投影点
+ */
 PathPoint GetProjectionPoint(const CarState& cur_pose, 
                              const PathPoint& match_point);
+/**
+ * @brief Get the Projection Point object 计算投影点
+ * 
+ * @param frenet_point 任意Frenet坐标系下的点
+ * @param ref_path Cartesian坐标系下的参考陆军
+ * @return PathPoint Cartesian坐标系下，计算出来的任意点在Frenet轨迹上的投影点
+ */
 PathPoint GetProjectionPoint(const FrenetPoint& frenet_point,
                              const std::vector<PathPoint> ref_path);
+/**
+ * @brief Cartesian坐标系转换为Frenet坐标系
+ * 
+ * @param global_point Cartesian坐标点
+ * @param projection_point 轨迹上的投影点
+ * @return FrenetPoint Frenet坐标系下的点
+ */
 FrenetPoint Cartesian2Frenet(const CarState& global_point,
                              const PathPoint& projection_point);
-FrenetPoint CalFrenet(const CarState& global_point, 
-                      const std::vector<PathPoint>& ref_path);
+/**
+ * @brief Get the Frenet Point object 总的计算FrenetPoint的函数
+ */
+FrenetPoint GetFrenetPoint(const CarState& global_point, 
+                           const std::vector<PathPoint>& ref_path);
+/**
+ * @brief Frenet坐标系下的点转换到Cartesian坐标系下
+ * 
+ * @param frenet_point 任意Frenet坐标系下的点
+ * @param ref_path Cartesian坐标系下的参考陆军
+ */
 void Frenet2Cartesian(FrenetPoint& frenet_point, 
                       const std::vector<PathPoint>& ref_path);
 class CommonInfo {
  public:
   CommonInfo() = delete;
+  /**
+   * @brief Construct a new Common Info object 工具类，主要处理回调函数和各种状态值
+   * 
+   * @param role_name carla中车的名称
+   * @param nh 
+   */
   CommonInfo(const std::string role_name, ros::NodeHandle& nh) : nh_(nh) {
     cruise_speed_ = 5.0;
     is_odom_received_ = false;
@@ -67,16 +110,41 @@ class CommonInfo {
   }
   ~CommonInfo() = default;
  
+  /**
+   * @brief 定位回调函数，获取到车辆位置后会将flag置为true
+   * 
+   * @param msg carla发布的odom msg
+   */
   void CarlaOdomCallBack(const nav_msgs::Odometry::ConstPtr& msg);
+  /**
+   * @brief 巡航速度回调函数，获取到期望速度后更新
+   * 
+   * @param msg 人为发送的期望速度
+   */
   void CruiseSpeedCallBack(const std_msgs::Float32::ConstPtr& msg);
+  /**
+   * @brief 全局路径回调函数，获取到全局路径后进行更新并将flag置为true
+   * 
+   * @param msg carla自带的全局规划规划出的轨迹
+   */
   void GlobalPathCallBack(const nav_msgs::Path::ConstPtr& msg);
+  /**
+   * @brief 车辆传感器状态回调函数
+   * 
+   * @param msg carla发布的车辆状态信息
+   */
   void IMUCallBack(const sensor_msgs::Imu::ConstPtr& msg);
+  /**
+   * @brief 检测到的其他目标回调函数
+   * 
+   * @param msg carla发布的道路信息
+   */
   void DetectedObjectsCallBack(
       const derived_object_msgs::ObjectArray::ConstPtr& msg);
 
  public:
   ros::NodeHandle nh_;
-  bool is_odom_received_;
+  bool is_odom_received_;                   
   double cruise_speed_;
   CarState cur_pose_;
   std::vector<PathPoint> global_path_;

@@ -167,12 +167,10 @@ std::vector<FrenetPath> LatticePlanner::SamplingCruisingFrenetPaths(
 }
 void LatticePlanner::GetCartesianPaths(std::vector<FrenetPath>& frenet_paths, 
                                        const std::vector<PathPoint>& ref_path) {
-  double max_dis = EuclideanDis(ref_path[0].x, ref_path[0].y, 
-                                ref_path.back().x, ref_path.back().y);
   for (auto& frenet_path : frenet_paths) {
     frenet_path.size_ = 0;
     for (int i = 0; i < frenet_path.frenet_points.size(); i++) {
-      if (frenet_path.frenet_points[i].s >= max_dis) {
+      if (frenet_path.frenet_points[i].s >= ref_path.back().s_) {
         break;
       }
       frenet_path.size_++;

@@ -13,6 +13,18 @@
 class QuinticPolynomial {
  public:
   QuinticPolynomial() = delete;
+  /**
+   * @brief Construct a new Quintic Polynomial object 构建五次多项式类
+   * 
+   * @param xs 起点坐标
+   * @param vs 起点速度
+   * @param as 起点加速度
+   * @param xe 终点坐标
+   * @param ve 终点速度
+   * @param ae 终点加速度
+   * @param Ts 起始时刻
+   * @param Te 终止时刻
+   */
   QuinticPolynomial(const double& xs, const double& vs, const double& as, 
                     const double& xe, const double& ve, const double& ae,
                     const double& Ts, const double& Te) {
