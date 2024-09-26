@@ -1,0 +1,10 @@
+sample_max_time: 4.0
+sample_min_time: 2.5
+sample_time_step: 0.5
+sample_lat_width: 3.75
+sample_width_length: 0.25
+
+weight_st_object: 0.1
+weight_st_jerk: 0.01
+weight_lt_offset: 40.0
+weight_lt_acc: 0.01

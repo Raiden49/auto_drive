@@ -1,0 +1,7 @@
+ref_weight_smooth: 70
+ref_weight_path_length: 10
+ref_weight_ref_deviation: 20
+
+lower_bound: -0.1
+upper_bound: 0.1
+
