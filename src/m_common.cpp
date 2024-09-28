@@ -85,12 +85,18 @@ PathPoint GetProjectionPoint(const FrenetPoint& frenet_point,
 FrenetPoint Cartesian2Frenet(const CarState& global_point,
                              const PathPoint& projection_point) {
   FrenetPoint frenet_point;
-  frenet_point.x = global_point.x; frenet_point.y = global_point.y; 
-  frenet_point.z = global_point.z; frenet_point.yaw = global_point.yaw;
-  frenet_point.cur = global_point.cur; frenet_point.vx = global_point.vx;
-  frenet_point.vy = global_point.vy; frenet_point.v = global_point.v;
-  frenet_point.ax = global_point.ax; frenet_point.ay = global_point.ay;
-  frenet_point.a = global_point.a; frenet_point.t = global_point.t;
+  frenet_point.x = global_point.x; 
+  frenet_point.y = global_point.y; 
+  frenet_point.z = global_point.z; 
+  frenet_point.yaw = global_point.yaw;
+  frenet_point.cur = global_point.cur; 
+  frenet_point.vx = global_point.vx;
+  frenet_point.vy = global_point.vy; 
+  frenet_point.v = global_point.v;
+  frenet_point.ax = global_point.ax; 
+  frenet_point.ay = global_point.ay;
+  frenet_point.a = global_point.a; 
+  frenet_point.t = global_point.t;
 
   double delta_theta = global_point.yaw - projection_point.yaw;
   // s
@@ -104,6 +110,11 @@ FrenetPoint Cartesian2Frenet(const CarState& global_point,
   // s_d
   frenet_point.s_d = global_point.v * std::cos(delta_theta) / 
                      (1 - projection_point.cur * frenet_point.l);
+
+  // std::cout << "global_point v: " << global_point.v << std::endl;
+  // std::cout << "test: " << global_point.v * std::cos(delta_theta) << std::endl;
+  // std::cout << "frenet point sd: " << frenet_point.s_d << std::endl; 
+
   // ld = v * sin(delta_theta)
   frenet_point.l_d = global_point.v * std::sin(delta_theta);
   // l_ds = l_d / s_d

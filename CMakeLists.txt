@@ -54,6 +54,7 @@ add_library(${PROJECT_NAME}
   src/optim/b_spline_optim.cpp
   src/optim/qp_optim.cpp 
   src/planner/lattice_planner.cpp 
+  src/planner/em_planner.cpp
   src/controller/controller_node.cpp 
   src/controller/controller.cpp 
   src/collision_detection.cpp 

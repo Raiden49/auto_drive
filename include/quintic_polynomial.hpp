@@ -42,6 +42,11 @@ class QuinticPolynomial {
     coeff = A.colPivHouseholderQr().solve(B);
     a0 = coeff[0]; a1 = coeff[1]; a2 = coeff[2];
     a3 = coeff[3]; a4 = coeff[4]; a5 = coeff[5];
+    // std::cout << "quintic params: " << xs << ", " << vs << ", " << as 
+    //           << ", " << xe << ", " << ve << ", " << ae << ", " << Ts
+    //           << ", " << Te << std::endl;
+    // std::cout << "quintic coeff: " << a0 << ", " << a1 << ", " << a2 
+    //           << ", " << a3 << ", " << a4 << ", " << a5 << std::endl;
   }
 
   inline double CalPoint(const double& t) {

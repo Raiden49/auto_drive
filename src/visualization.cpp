@@ -28,10 +28,10 @@ void VisualizationTool::SamplePathsVisualization(
     marker.action = visualization_msgs::Marker::ADD;
     marker.scale.x = 0.05;
     marker.scale.y = 0.05;
-    marker.color.r = 0.3;
-    marker.color.g = 0.5;
-    marker.color.b = 1;
-    marker.color.a = 0.3;
+    marker.color.r = 6;
+    marker.color.g = 118;
+    marker.color.b = 251;
+    marker.color.a = 0.3;     // 0.3
     for (auto& point : sample_paths[i].frenet_points) {
       geometry_msgs::Point vtx;
       vtx.x = point.x;

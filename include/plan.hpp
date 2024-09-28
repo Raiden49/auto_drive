@@ -14,6 +14,8 @@
 #include "visualization.hpp"
 #include "reference_line.hpp"
 #include "planner/lattice_planner.hpp"
+#include "planner/em_planner.hpp"
+#include "optim/qp_optim.hpp"
 
 #include "auto_drive/Waypoint.h"
 #include "auto_drive/WaypointArray.h"
@@ -29,7 +31,6 @@ class Plan {
 
     nh_.param<std::string>("role_name", role_name_, "ego_vehicle");
     nh_.param("local_length", local_length_, 50.0);
-    // nh_.param("is_planner", is_planner_, true);
     nh_.param("collision_dis", collision_dis_, 1.15);
 
     // lattice planner params
@@ -53,6 +54,26 @@ class Plan {
     nh_.param("plan/lower_bound", ref_line_params_["lower_bound"], -2.0);
     nh_.param("plan/upper_bound", ref_line_params_["upper_bound"], 2.0);
 
+    // dp path params
+    nh_.param("plan/dp_sample_l", dp_path_params_["dp_sample_l"], 1.0);
+    nh_.param("plan/dp_sample_s", dp_path_params_["dp_sample_s"], 5.0);
+    nh_.param("plan/dp_sample_rows", dp_path_params_["dp_sample_rows"], 5.0);
+    nh_.param("plan/dp_sample_cols", dp_path_params_["dp_sample_cols"], 5.0);
+    nh_.param("plan/dp_cost_collision", dp_path_params_["dp_cost_collision"], 10e8);
+    nh_.param("plan/dp_cost_dl", dp_path_params_["dp_cost_dl"], 150.);
+    nh_.param("plan/dp_cost_ddl", dp_path_params_["dp_cost_ddl"], 10.);
+    nh_.param("plan/dp_cost_dddl", dp_path_params_["dp_cost_dddl"], 1.);
+    nh_.param("plan/dp_cost_ref", dp_path_params_["dp_cost_ref"], 100.);
+    // qp path params
+    nh_.param("plan/qp_cost_l", qp_path_params_["qp_cost_l"], 15.);
+    nh_.param("plan/qp_cost_dl", qp_path_params_["qp_cost_dl"], 1500.);
+    nh_.param("plan/qp_cost_ddl", qp_path_params_["qp_cost_ddl"], 10.);
+    nh_.param("plan/qp_cost_dddl", qp_path_params_["qp_cost_dddl"], 1.);
+    nh_.param("plan/qp_cost_ref", qp_path_params_["qp_cost_ref"], 5.);
+    nh_.param("plan/qp_cost_end_l", qp_path_params_["qp_cost_end_l"], 0.);
+    nh_.param("plan/qp_cost_end_dl", qp_path_params_["qp_cost_end_dl"], 0.);
+    nh_.param("plan/qp_cost_end_ddl", qp_path_params_["qp_cost_end_ddl"], 0.);
+    
     common_info_ptr_ = std::make_shared<CommonInfo>(role_name_, nh);
     visualization_tool_ptr_ = std::make_shared<VisualizationTool>(nh);
     ref_line_ptr_ = std::make_shared<ReferenceLine>(local_length_,
@@ -61,12 +82,17 @@ class Plan {
         common_info_ptr_->detected_objects_, collision_dis_, ref_path_);
     lattice_planner_ptr_ = std::make_shared<planner::LatticePlanner>(
         common_info_ptr_->cruise_speed_, lattice_params_, collision_detection_ptr_);
+    em_planner_ptr_ = std::make_shared<planner::EMPlanner>(
+        dp_path_params_, qp_path_params_, collision_detection_ptr_);
     local_waypoints_pub_ = nh_.advertise<
         auto_drive::WaypointArray>("/reference_line/local_waypoint", 10);
+    // controller_sim_pub_ = nh.advertise<
+    //     geometry_msgs::Pose>("/carla/ego_vehicle/control/set_transform", 10);
   }
   ~Plan() = default;
   void Loop();
 
+  // void ControllerSim(const FrenetPath& final_path);
   void WayPointsPublish(const FrenetPath& final_path);
 
  public:
@@ -75,9 +101,10 @@ class Plan {
   std::shared_ptr<ReferenceLine> ref_line_ptr_;
   std::shared_ptr<CollisionDetection> collision_detection_ptr_;
   std::shared_ptr<planner::LatticePlanner> lattice_planner_ptr_;
+  std::shared_ptr<planner::EMPlanner> em_planner_ptr_;
+  std::shared_ptr<optimization::QP> qp_optimer_ptr_;
 
  private:
-  // bool is_planner_;
   bool is_first_loop_;
   bool is_car_followed_;                // 判断是否正在跟车
   double local_length_;                 // 截取的参考线长度
@@ -89,6 +116,7 @@ class Plan {
   std::vector<FrenetPath> sample_paths_;// 所有采样到的路径
   std::vector<FrenetPath> history_paths_;
   ros::Publisher local_waypoints_pub_;  // 发送给控制器的消息
+  ros::Publisher controller_sim_pub_;
 
  private:
   double collision_dis_;                // 碰撞距离

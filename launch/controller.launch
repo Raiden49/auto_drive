@@ -5,7 +5,7 @@
   <arg name="control_method" default='LQR_kinematics'/><!-- "PurePursuit", "Stanley", "LQR_kinematics" "LQR_dynamics" -->
 
 
-  <node pkg="auto_drive" type="controller" name="auto_drive_controller" output="log">
+  <node pkg="auto_drive" type="controller" name="controller" output="log">
     <param name="role_name" type="string" value="$(arg role_name)" />
     <param name="control_method" type="string" value="$(arg control_method)" />
     

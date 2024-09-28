@@ -140,7 +140,7 @@ std::vector<FrenetPath> LatticePlanner::SamplingCruisingFrenetPaths(
       frenet_path.max_speed = std::numeric_limits<double>::min();
       frenet_path.max_acc = std::numeric_limits<double>::min();
       
-      for (double t = 0; t < t_i; t += 0.02) {
+      for (double t = 0; t <= t_i; t += 0.02) {
         FrenetPoint frenet_point;
         frenet_point.t = t;
         GetStValues(frenet_point, st_polynomial);

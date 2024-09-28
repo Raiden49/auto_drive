@@ -5,12 +5,13 @@
   <arg name="spawn_point" default='229.5,-86,2.5,0,0,-90'/>
   <arg name="town" default='Town03'/>
 
-  <node pkg="auto_drive" type="plan" name="auto_drive_plan" output="screen">
+  <node pkg="auto_drive" type="plan" name="plan" output="screen">
     <param name="role_name" type="string" value="$(arg role_name)" />
     <param name="local_length" type="double" value="$(arg local_length)" />
     <param name="is_planner" type="bool" value="$(arg is_planner)" />
     <rosparam command="load" file="$(find auto_drive)/config/lattice_planner.yaml" />
-    <rosparam command="load" file="$(find auto_drive)/config/reference_line.yaml" /> 
+    <rosparam command="load" file="$(find auto_drive)/config/reference_line.yaml" />
+    <rosparam command="load" file="$(find auto_drive)/config/em_planner.yaml" /> 
   </node>
 
   <include file="$(find carla_waypoint_publisher)/launch/carla_waypoint_publisher.launch" />
