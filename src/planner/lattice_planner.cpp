@@ -10,6 +10,14 @@ namespace auto_drive{
 namespace planner
 {
 void LatticePlanner::GetStValues(FrenetPoint& frenet_point, 
+    const std::shared_ptr<QuarticPolynomial> st_polynomial) {
+  frenet_point.s = st_polynomial->CalPoint(frenet_point.t);
+  frenet_point.s_d = st_polynomial->CalFirstDerivative(frenet_point.t);
+  frenet_point.s_d_d = st_polynomial->CalSecondDerivative(frenet_point.t);
+  frenet_point.s_d_d_d = st_polynomial->CalThirdDerivative(frenet_point.t);
+  frenet_point.v = desired_speed_;
+}
+void LatticePlanner::GetStValues(FrenetPoint& frenet_point, 
     const std::shared_ptr<QuinticPolynomial> st_polynomial) {
   frenet_point.s = st_polynomial->CalPoint(frenet_point.t);
   frenet_point.s_d = st_polynomial->CalFirstDerivative(frenet_point.t);
@@ -125,11 +133,16 @@ std::vector<FrenetPath> LatticePlanner::SamplingFollowingFrenetPaths(
 std::vector<FrenetPath> LatticePlanner::SamplingCruisingFrenetPaths(
     const FrenetPoint& initial_frenet_point) {
   std::vector<FrenetPath> frenet_paths;
-  for (double t_i = sample_max_time_; t_i <= sample_max_time_;) {
+  for (double t_i = sample_min_time_; t_i <= sample_max_time_;) {
     t_i += sample_time_step_;
-    auto st_polynomial = std::make_shared<QuinticPolynomial>(
-        initial_frenet_point.s, initial_frenet_point.s_d, 0.0, 
-        initial_frenet_point.s + 20.0, cruise_speed_, 0.0, 0.0, t_i);
+    // 五次多项式，采样后的五次曲线有一定缺点
+    // auto st_polynomial = std::make_shared<QuinticPolynomial>(
+    //     initial_frenet_point.s, initial_frenet_point.s_d, 0.0, 
+    //     initial_frenet_point.s + 20.0, cruise_speed_, 0.0, 0.0, t_i);
+
+    auto st_polynomial = std::make_shared<QuarticPolynomial>(
+        initial_frenet_point.s, initial_frenet_point.s_d, 0.0,
+        cruise_speed_, 0.0, t_i);
 
     for (double l_i = -1 * sample_lat_width_; l_i <= sample_lat_width_;) {
       l_i += sample_width_length_;
@@ -214,7 +227,7 @@ std::vector<FrenetPath> LatticePlanner::GetCandidatePaths(
   GetCartesianPaths(frenet_paths, ref_path);
   auto&& valid_paths = 
       GetValidPaths(frenet_paths, leader_frenet_point, is_car_followed);
-  
+
   std::vector<FrenetPath> planning_paths;
   while (!valid_paths.empty()) {
     planning_paths.push_back(valid_paths.top());

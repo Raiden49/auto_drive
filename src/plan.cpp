@@ -19,16 +19,16 @@ void Plan::WayPointsPublish(const FrenetPath& final_path) {
   }
   local_waypoints_pub_.publish(local_waypoints);
 }
-// void Plan::ControllerSim(const FrenetPath& final_path) {
-// for (int i = 0; i < std::min(10, final_path.size_); i++) {
-//   geometry_msgs::Pose transform_pose;
-//   transform_pose.position.x = final_path.frenet_points[i].x;
-//   transform_pose.position.y = final_path.frenet_points[i].y;
-//   transform_pose.orientation = 
-//       tf::createQuaternionMsgFromYaw(final_path.frenet_points[1].yaw);
-//   controller_sim_pub_.publish(transform_pose);
-// }
-// }
+void Plan::ControllerSim(const FrenetPath& final_path) {
+for (int i = 0; i < std::min(10, final_path.size_); i++) {
+  geometry_msgs::Pose transform_pose;
+  transform_pose.position.x = final_path.frenet_points[i].x;
+  transform_pose.position.y = final_path.frenet_points[i].y;
+  transform_pose.orientation = 
+      tf::createQuaternionMsgFromYaw(final_path.frenet_points[1].yaw);
+  controller_sim_pub_.publish(transform_pose);
+}
+}
 void Plan::Loop() {
   ros::Rate rate(100.0);
   
@@ -45,14 +45,11 @@ void Plan::Loop() {
       pre_match_index_ = ref_line_ptr_->match_index_;
 
       ref_path_ = local_path_;
-      
-      // start_index = pre_match_index_;
-      // local_path_ = ref_line_ptr_->LocalPathTruncation(
-      //     common_info_ptr_->cur_pose_, common_info_ptr_->global_path_, start_index);
-      // pre_match_index_ = ref_line_ptr_->match_index_;
 
       if (local_path_.size() > 1) {
-        // ref_path_ = ref_line_ptr_->LineSmooth(local_path_);
+
+        collision_detection_ptr_ = std::make_shared<CollisionDetection>(
+            common_info_ptr_->detected_objects_, collision_dis_, ref_path_);
 
         CarState global_initial_point;
         if (is_first_loop_ || pre_final_path_.frenet_points.size() < 5) {
@@ -62,7 +59,7 @@ void Plan::Loop() {
         else if (EuclideanDis(common_info_ptr_->cur_pose_.x, 
                               common_info_ptr_->cur_pose_.y,
                               pre_final_path_.frenet_points[0].x, 
-                              pre_final_path_.frenet_points[0].y) > 10) {
+                              pre_final_path_.frenet_points[0].y) > 5) {
         // else if (fabs(common_info_ptr_->cur_pose_.x - pre_final_path_.frenet_points[0].x) > 2.0 ||
                 //  fabs(common_info_ptr_->cur_pose_.y - pre_final_path_.frenet_points[0].y) > 0.5) {
           double dt = 0.1;
@@ -85,10 +82,8 @@ void Plan::Loop() {
           global_initial_point = next_pose;
         }
         else {
-          global_initial_point = pre_final_path_.frenet_points[0];
+          global_initial_point = pre_final_path_.frenet_points[3];
         }
-
-        // global_initial_point = common_info_ptr_->cur_pose_;
 
         auto initial_frenet_point = GetFrenetPoint(global_initial_point, 
                                                    ref_path_);
@@ -105,6 +100,7 @@ void Plan::Loop() {
         is_car_followed_ = false;
         FrenetPoint leader_car;
         for (auto& object : collision_detection_ptr->dynamic_obstacle_list_) {
+          // std::cout << "test: " << object.point.x << ", " << object.point.y << std::endl; 
           int frenet_match_index = SearchMatchIndex(object.point.x, 
                                                     object.point.y, 
                                                     ref_path_, 0);
@@ -120,16 +116,32 @@ void Plan::Loop() {
             break;
           }
         }
-        sample_paths_ = lattice_planner_ptr_->GetCandidatePaths(
-            ref_path_, initial_frenet_point, leader_car, is_car_followed_);
-        final_path_ = sample_paths_[0];
-        pre_final_path_ = final_path_;
-        history_paths_.push_back(final_path_);
 
-        // final_path_ = em_planner_ptr_->Planning(ref_path_, initial_frenet_point);
-        // sample_paths_ = em_planner_ptr_->GetSamplePath(ref_path_);
-        // pre_final_path_ = final_path_;
-        // history_paths_.push_back(final_path_);
+        if (planner_method_ == "lattice_planner") {
+          lattice_planner_ptr_->collision_detection_ptr_ = collision_detection_ptr;
+          sample_paths_ = lattice_planner_ptr_->GetCandidatePaths(
+              ref_path_, initial_frenet_point, leader_car, is_car_followed_);
+          
+          if (sample_paths_.size() == 0) {
+            ROS_ERROR("Lattice planner can't find any valid path");
+          }
+          final_path_ = sample_paths_[0];
+          pre_final_path_ = final_path_;
+          history_paths_.push_back(final_path_);
+          visualization_tool_ptr_->SamplePathsVisualization(sample_paths_);
+        }
+        else if (planner_method_ == "em_planner") {
+          em_planner_ptr_->collision_detection_ptr_ = collision_detection_ptr;
+          final_path_ = em_planner_ptr_->Planning(ref_path_, initial_frenet_point);
+          sample_paths_ = em_planner_ptr_->GetSamplePath(ref_path_);
+          
+          pre_final_path_ = final_path_;
+          history_paths_.push_back(final_path_);
+          visualization_tool_ptr_->SamplePathsVisualization(sample_paths_);
+        }
+        else {
+          ROS_ERROR("Please set a planner!!!!!!");
+        }
 
         std::vector<PathPoint> cartesian_final_path;
         cartesian_final_path.resize(final_path_.frenet_points.size());
@@ -138,7 +150,7 @@ void Plan::Loop() {
           cartesian_final_path[i].y = final_path_.frenet_points[i].y;
         }
         qp_optimer_ptr_ = std::make_shared<optimization::QP>(
-            -0.1, 0.1, 10, 5, 5, cartesian_final_path);
+            -1, 1, 10, 5, 1, cartesian_final_path);
         auto&& optim_points = qp_optimer_ptr_->Process();
         for (int i = 0; i < optim_points.size(); i++) {
           final_path_.frenet_points[i].x = optim_points[i].x;
@@ -147,7 +159,6 @@ void Plan::Loop() {
 
         ROS_INFO("Find the best path!!! ,the size is%d", final_path_.size_);
         visualization_tool_ptr_->FinalPathVisualization(final_path_);
-        visualization_tool_ptr_->SamplePathsVisualization(sample_paths_);
         visualization_tool_ptr_->
             ObjectSpeedVisualization(collision_detection_ptr->detected_objects_);
         // ControllerSim(final_path_);

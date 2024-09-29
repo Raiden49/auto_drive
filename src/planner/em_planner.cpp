@@ -13,23 +13,35 @@ std::vector<std::vector<FrenetPoint>>
   std::vector<std::vector<FrenetPoint>> dp_sample_path;
   int rows = this->dp_sample_rows_;
   int cols = this->dp_sample_cols_;
+
   dp_sample_path.resize(rows);
-  std::cout << "row: " << rows << std::endl; 
   for (int i = 0; i < rows; i++) {
     dp_sample_path[i].resize(cols);
     for (int j = 0; j < cols; j++) {
-      dp_sample_path[i][j].s = 
-          initial_frenet_point.s + (j + 1) * this->dp_sample_s_;
-      dp_sample_path[i][j].l = 
+      double s = initial_frenet_point.s + (j + 1) * this->dp_sample_s_;
+      double l = 
           initial_frenet_point.l + ((rows + 1) / 2 - (i + 1)) * this->dp_sample_l_;
+      
+      if (l < lane_left_l_) {
+        dp_sample_path[i][j].l = lane_left_l_;
+      }
+      else if (l > lane_right_l_) {
+        dp_sample_path[i][j].l = lane_right_l_;
+      }
+      else {
+        dp_sample_path[i][j].l = l;
+      }
+      dp_sample_path[i][j].s = s;
+      dp_sample_path[i][j].l = l;
       dp_sample_path[i][j].l_ds = 0;
       dp_sample_path[i][j].l_d_ds = 0;
 
       // std::cout << "dp sample point: " << dp_sample_path[i][j].s << ", " 
       //           << dp_sample_path[i][j].l << std::endl;
-    
+
     }
   }
+
   return dp_sample_path;
 }
 double EMPlanner::GetDPPathCost(const FrenetPoint& start_frenet_point,
@@ -59,7 +71,7 @@ double EMPlanner::GetDPPathCost(const FrenetPoint& start_frenet_point,
                    this->dp_cost_dddl_ * pow(interpolation_point.l_d_d_ds, 2);
     if (abs(interpolation_point.l_d_ds) > 0.5 || 
         abs(atan(interpolation_point.l_d_d_ds) > 0.4 * M_PI)) {
-      smooth_cost = DBL_MAX;
+      smooth_cost += 1000;
     }
 
     ref_cost += this->dp_cost_ref_ * pow(interpolation_point.l, 2);
@@ -75,6 +87,8 @@ double EMPlanner::GetDPPathCost(const FrenetPoint& start_frenet_point,
       }
     }
   }
+  // std::cout << "cost: " << smooth_cost << ", " 
+  //           << ", " << ref_cost << ", " << collision_cost << std::endl;
   return smooth_cost + ref_cost + collision_cost;
 }
 std::vector<FrenetPoint> EMPlanner::GetDPPath(const FrenetPoint& initial_frenet_point) {
@@ -218,8 +232,6 @@ void EMPlanner::GetConvexSpace(const std::vector<FrenetPoint>& dp_final_path,
       }
     }
   }
-  // l_min = Eigen::VectorXd::Ones(size) * -10;
-  // l_max = Eigen::VectorXd::Ones(size) * 10;
 }
 std::vector<FrenetPoint> EMPlanner::GetQPPath(
     const std::vector<FrenetPoint>& dp_final_path) {
@@ -342,6 +354,7 @@ std::vector<FrenetPoint> EMPlanner::GetQPPath(
       solver.solve();
   } catch (const std::exception& e) {
       std::cerr << "Error getting problem solved" << e.what() << std::endl;
+      return dp_final_path;
   }
   clock_t end_time = clock();
   double run_time = (double)(end_time - start_time) * 1000 / CLOCKS_PER_SEC;
@@ -381,6 +394,10 @@ std::vector<FrenetPath> EMPlanner::GetSamplePath(const std::vector<PathPoint>& r
 }
 FrenetPath EMPlanner::Planning(const std::vector<PathPoint>& ref_path, 
                                const FrenetPoint& initial_frenet_point) {
+  // lane width test
+  lane_left_l_ = initial_frenet_point.l - 2;
+  lane_right_l_ = initial_frenet_point.l + 6;
+  
   FrenetPath final_path;
   auto&& dp_path = GetDPPath(initial_frenet_point);
   // std::cout << "dp path size: " << dp_path.size() << std::endl;

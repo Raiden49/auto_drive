@@ -13,6 +13,7 @@
 #include "m_common.hpp"
 #include "collision_detection.hpp"
 #include "quintic_polynomial.hpp"
+#include "quartic_polynomial.hpp"
 
 namespace auto_drive {
 namespace planner {
@@ -53,6 +54,15 @@ class LatticePlanner {
    * 
    * @param frenet_point 当前Frenet坐标系下的点
    * @param st_polynomial 纵向五次多项式
+   */
+  void GetStValues(FrenetPoint& frenet_point, 
+                   const std::shared_ptr<QuarticPolynomial> st_polynomial);
+  
+  /**
+   * @brief Get the St Values object
+   * 
+   * @param frenet_point 当前Frenet坐标系下的点
+   * @param st_polynomial 纵向四次多项式
    */
   void GetStValues(FrenetPoint& frenet_point, 
                    const std::shared_ptr<QuinticPolynomial> st_polynomial);

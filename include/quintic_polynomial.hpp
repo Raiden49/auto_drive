@@ -2,7 +2,7 @@
  * @Author: Raiden49 
  * @Date: 2024-09-24 09:37:21 
  * @Last Modified by: Raiden49
- * @Last Modified time: 2024-09-25 15:31:00
+ * @Last Modified time: 2024-09-29 10:22:08
  */
 #ifndef QUINTIC_POLYNOMIAL_HPP_
 #define QUINTIC_POLYNOMIAL_HPP_
@@ -10,6 +10,7 @@
 #include <Eigen/Eigen>
 #include <cmath>
 
+namespace auto_drive {
 class QuinticPolynomial {
  public:
   QuinticPolynomial() = delete;
@@ -67,5 +68,6 @@ class QuinticPolynomial {
  public:
   double a0, a1, a2, a3, a4, a5;
 };
+}
 
 #endif // QUINTIC_POLYNOMIAL_HPP_

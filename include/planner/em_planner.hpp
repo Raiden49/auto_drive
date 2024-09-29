@@ -64,6 +64,8 @@ class EMPlanner {
  public:
   double path_ds_ = 0.1;
   double desired_speed_ = 8.0;
+  double lane_left_l_ = 0;
+  double lane_right_l_ = 0;
   std::vector<std::vector<FrenetPoint>> dp_sample_points_;
   std::shared_ptr<CollisionDetection> collision_detection_ptr_;
  
