@@ -21,18 +21,17 @@ std::vector<std::vector<FrenetPoint>>
       double s = initial_frenet_point.s + (j + 1) * this->dp_sample_s_;
       double l = 
           initial_frenet_point.l + ((rows + 1) / 2 - (i + 1)) * this->dp_sample_l_;
-      
-      if (l < lane_left_l_) {
+    
+      if (l > lane_left_l_) {
         dp_sample_path[i][j].l = lane_left_l_;
       }
-      else if (l > lane_right_l_) {
+      else if (l < lane_right_l_) {
         dp_sample_path[i][j].l = lane_right_l_;
       }
       else {
         dp_sample_path[i][j].l = l;
       }
       dp_sample_path[i][j].s = s;
-      dp_sample_path[i][j].l = l;
       dp_sample_path[i][j].l_ds = 0;
       dp_sample_path[i][j].l_d_ds = 0;
 
@@ -199,8 +198,10 @@ int EMPlanner::GetObsIndex(const std::vector<FrenetPoint>& dp_final_path,
 void EMPlanner::GetConvexSpace(const std::vector<FrenetPoint>& dp_final_path,
                               Eigen::VectorXd& l_min, Eigen::VectorXd& l_max) {
   int size = dp_final_path.size();
-  l_min = Eigen::VectorXd::Ones(size) * -10;
-  l_max = Eigen::VectorXd::Ones(size) * 10;
+  // l_min = Eigen::VectorXd::Ones(size) * -10;
+  // l_max = Eigen::VectorXd::Ones(size) * 10;
+  l_min = Eigen::VectorXd::Ones(size) * lane_right_l_;
+  l_max = Eigen::VectorXd::Ones(size) * lane_left_l_;
 
   for (auto& static_obs : collision_detection_ptr_->static_obstacle_list_) {
     double obs_s_min = static_obs.point.s;
@@ -230,6 +231,7 @@ void EMPlanner::GetConvexSpace(const std::vector<FrenetPoint>& dp_final_path,
       else {
         l_max(i) = std::min(l_max(i), obs_l_min);
       }
+      // std::cout << "lmin, lmax: " << l_min(i) << ", " << l_max(i) << std::endl;
     }
   }
 }
@@ -237,7 +239,7 @@ std::vector<FrenetPoint> EMPlanner::GetQPPath(
     const std::vector<FrenetPoint>& dp_final_path) {
   int n = dp_final_path.size();
   double ds = path_ds_;
-  double width = 3.6;     // width of the car
+  double width = 1.8;     // width of the car
 
   Eigen::VectorXd l_min, l_max;
   GetConvexSpace(dp_final_path, l_min, l_max);
@@ -394,10 +396,6 @@ std::vector<FrenetPath> EMPlanner::GetSamplePath(const std::vector<PathPoint>& r
 }
 FrenetPath EMPlanner::Planning(const std::vector<PathPoint>& ref_path, 
                                const FrenetPoint& initial_frenet_point) {
-  // lane width test
-  lane_left_l_ = initial_frenet_point.l - 2;
-  lane_right_l_ = initial_frenet_point.l + 6;
-  
   FrenetPath final_path;
   auto&& dp_path = GetDPPath(initial_frenet_point);
   // std::cout << "dp path size: " << dp_path.size() << std::endl;

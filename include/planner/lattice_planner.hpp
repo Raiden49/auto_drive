@@ -157,9 +157,9 @@ class LatticePlanner {
       const FrenetPoint& leader_frenet_point, const bool& is_car_followed);
  
  public:
-   const double MAX_SPEED = 50.0 / 3.6;
-   const double MAX_ACCEL = 8.0;
-   const double MAX_CURVATURE = 100.0;
+  const double MAX_SPEED = 50.0 / 3.6;
+  const double MAX_ACCEL = 8.0;
+  const double MAX_CURVATURE = 100.0;
   // sample params
   double sample_max_time_;        // 最大纵向采样时间
   double sample_min_time_;        // 最小纵向采样时间

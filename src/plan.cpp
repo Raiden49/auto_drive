@@ -131,6 +131,9 @@ void Plan::Loop() {
           visualization_tool_ptr_->SamplePathsVisualization(sample_paths_);
         }
         else if (planner_method_ == "em_planner") {
+          em_planner_ptr_->lane_left_l_ = 0.75 * common_info_ptr_->lane_width_;
+          em_planner_ptr_->lane_right_l_ = 0 - 0.25 * common_info_ptr_->lane_width_;
+
           em_planner_ptr_->collision_detection_ptr_ = collision_detection_ptr;
           final_path_ = em_planner_ptr_->Planning(ref_path_, initial_frenet_point);
           sample_paths_ = em_planner_ptr_->GetSamplePath(ref_path_);
@@ -150,7 +153,7 @@ void Plan::Loop() {
           cartesian_final_path[i].y = final_path_.frenet_points[i].y;
         }
         qp_optimer_ptr_ = std::make_shared<optimization::QP>(
-            -1, 1, 10, 5, 1, cartesian_final_path);
+            -0.5, 0.5, 10, 1, 1, cartesian_final_path);
         auto&& optim_points = qp_optimer_ptr_->Process();
         for (int i = 0; i < optim_points.size(); i++) {
           final_path_.frenet_points[i].x = optim_points[i].x;

@@ -8,6 +8,8 @@
     <param name="local_length" type="double" value="$(arg local_length)" />
     <rosparam command="load" file="$(find auto_drive)/config/reference_line.yaml" />
     <rosparam command="load" file="$(find auto_drive)/config/planner_config.yaml" /> 
+    <!-- <remap from="/final_waypoints" to="/casper_auto/final_waypoints" /> -->
+     <remap from="/final_waypoints" to="/reference_line/local_waypoint" />
   </node>
 
   <include file="$(find carla_waypoint_publisher)/launch/carla_waypoint_publisher.launch" />

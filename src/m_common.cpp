@@ -221,6 +221,10 @@ void CommonInfo::DetectedObjectsCallBack(
     detected_objects_.push_back(obs);
   }
 }
+void CommonInfo::LaneWdithCallBack(const std_msgs::Float32::ConstPtr& msg) {
+  this->lane_width_ = msg->data;
+  ROS_INFO_STREAM("Successfully get the lane width: " << msg->data);
+}
 } // namespace lattice_planner
 
 

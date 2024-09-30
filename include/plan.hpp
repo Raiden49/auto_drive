@@ -93,7 +93,7 @@ class Plan {
     em_planner_ptr_ = std::make_shared<planner::EMPlanner>(
         dp_path_params_, qp_path_params_, collision_detection_ptr_);
     local_waypoints_pub_ = nh_.advertise<
-        auto_drive::WaypointArray>("/reference_line/local_waypoint", 10);
+        auto_drive::WaypointArray>("final_waypoints", 10); 
     controller_sim_pub_ = nh.advertise<
         geometry_msgs::Pose>("/carla/ego_vehicle/control/set_transform", 10);
   }

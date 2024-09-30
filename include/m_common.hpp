@@ -92,6 +92,7 @@ class CommonInfo {
    * @param nh 
    */
   CommonInfo(const std::string role_name, ros::NodeHandle& nh) : nh_(nh) {
+    lane_width_ = 4.0;
     cruise_speed_ = 5.0;
     is_odom_received_ = false;
     detected_objects_.clear();
@@ -107,6 +108,8 @@ class CommonInfo {
         10, &CommonInfo::IMUCallBack, this);
     detected_objects_sub_ = nh_.subscribe("/carla/" + role_name + "/objects", 
         10, &CommonInfo::DetectedObjectsCallBack, this);
+    line_width_sub_ = 
+        nh_.subscribe("lane/width", 10, &CommonInfo::LaneWdithCallBack, this);
   }
   ~CommonInfo() = default;
  
@@ -141,12 +144,14 @@ class CommonInfo {
    */
   void DetectedObjectsCallBack(
       const derived_object_msgs::ObjectArray::ConstPtr& msg);
+  void LaneWdithCallBack(const std_msgs::Float32::ConstPtr& msg);
 
  public:
-  ros::NodeHandle nh_;
+  double lane_width_;
   bool is_odom_received_;                   
   double cruise_speed_;
   CarState cur_pose_;
+  ros::NodeHandle nh_;
   std::vector<PathPoint> global_path_;
   std::vector<Obstacle> detected_objects_;
 
@@ -156,6 +161,7 @@ class CommonInfo {
   ros::Subscriber cruise_speed_sub_;
   ros::Subscriber imu_sub_;
   ros::Subscriber detected_objects_sub_;
+  ros::Subscriber line_width_sub_;
 };
 }
 
