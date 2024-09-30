@@ -1,6 +1,7 @@
 # Auto drive
 个人对lattice planner和em planner学习实践的仓库，还需要更新
 ## lattice planner
+### 效果演示
 
 <div align=center>
 <img src="./docs/lattice_planner.gif" alt="lattice planner"/>
@@ -13,6 +14,7 @@
 </div>
 
 ## em planner
+### 效果演示
 
 <div align=center>
 <img src="./docs/em_planner.gif" alt="lattice planner"/>
