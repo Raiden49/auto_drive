@@ -57,8 +57,9 @@
 - 没有比较好的控制器，在避障的时候道路本身也窄，经常会由于控制跟不上而碰撞或规划不出新路径
 - lattice planner在有障碍物的时候采样路径有时很奇怪
 - em planner二次规划优化出来的路径有时候效果不如不优化
-- 代码还有些乱，需要整理
+- ~代码还有些乱，需要整理~
   
 ## 参考
-[控制器来源][https://github.com/czjaixuexi/carla_ros_bridge_pnc]
-[B站老王][https://space.bilibili.com/287989852]
+控制器来源:https://github.com/czjaixuexi/carla_ros_bridge_pnc
+
+B站老王:https://space.bilibili.com/287989852
