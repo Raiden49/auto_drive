@@ -31,15 +31,14 @@ int SearchMatchIndex(const double& cur_x, const double& cur_y,
 PathPoint GetProjectionPoint(const CarState& cur_pose, 
                             const PathPoint& match_point) {
   PathPoint projection_point = match_point;
-  // 求匹配点的切向量tor
+
   Eigen::Matrix<double, 2, 1> tor;
   tor << cos(match_point.yaw), sin(match_point.yaw);
-  // 求匹配点的垂直向量d
+
   Eigen::Matrix<double, 2, 1> d;
   d << cur_pose.x - match_point.x, cur_pose.y - match_point.y;
-  // d在tor方向的投影向量
+
   double e_s = tor.transpose() * d;
-  // 求投影点x y yaw
   projection_point.x = match_point.x + e_s * cos(match_point.yaw);
   projection_point.y = match_point.y + e_s * sin(match_point.yaw);
   projection_point.yaw = match_point.yaw + match_point.cur * e_s;
@@ -65,9 +64,6 @@ PathPoint GetProjectionPoint(const FrenetPoint& frenet_point,
   double x_r = ref_path[closet_index].x + (frenet_point.s - s_n) * cos(yaw);
   double y_r = ref_path[closet_index].y + (frenet_point.s - s_n) * sin(yaw);
 
-  // std::cout << "index: " << closet_index << std::endl;
-  // std::cout << "test: " << ref_path[closet_index].x << std::endl;
-  // std::cout << "test2: " << frenet_point.s - s_n << std::endl;
   // std::cout << "yaw: " << yaw << ", " << cos(yaw) << ", " << sin(yaw) << std::endl;
 
   double yaw_r = ref_path[closet_index].yaw + 
@@ -83,7 +79,13 @@ PathPoint GetProjectionPoint(const FrenetPoint& frenet_point,
   return projection_point;
 }
 FrenetPoint Cartesian2Frenet(const CarState& global_point,
-                             const PathPoint& projection_point) {
+                             const std::vector<PathPoint>& ref_path) {
+
+  int frenet_match_index = 
+      SearchMatchIndex(global_point.x, global_point.y, ref_path, 0);
+  PathPoint projection_point = 
+      GetProjectionPoint(global_point, ref_path[frenet_match_index]);
+
   FrenetPoint frenet_point;
   frenet_point.x = global_point.x; 
   frenet_point.y = global_point.y; 
@@ -141,15 +143,6 @@ FrenetPoint Cartesian2Frenet(const CarState& global_point,
     frenet_point.l_d_ds = (frenet_point.l_d_d - 
         frenet_point.l_ds * frenet_point.s_d_d) / pow(frenet_point.s_d, 2); 
   }
-  return frenet_point;
-}
-FrenetPoint GetFrenetPoint(const CarState& global_point, 
-                           const std::vector<PathPoint>& ref_path) {
-  int frenet_match_index = 
-      SearchMatchIndex(global_point.x, global_point.y, ref_path, 0);
-  PathPoint projection_point = 
-      GetProjectionPoint(global_point, ref_path[frenet_match_index]);
-  FrenetPoint frenet_point = Cartesian2Frenet(global_point, projection_point);
   return frenet_point;
 }
 void Frenet2Cartesian(FrenetPoint& frenet_point, 

@@ -20,13 +20,13 @@ void Plan::WayPointsPublish(const FrenetPath& final_path) {
   local_waypoints_pub_.publish(local_waypoints);
 }
 void Plan::ControllerSim(const FrenetPath& final_path) {
-for (int i = 0; i < std::min(10, final_path.size_); i++) {
-  geometry_msgs::Pose transform_pose;
-  transform_pose.position.x = final_path.frenet_points[i].x;
-  transform_pose.position.y = final_path.frenet_points[i].y;
-  transform_pose.orientation = 
-      tf::createQuaternionMsgFromYaw(final_path.frenet_points[1].yaw);
-  controller_sim_pub_.publish(transform_pose);
+  for (int i = 0; i < std::min(10, final_path.size_); i++) {
+    geometry_msgs::Pose transform_pose;
+    transform_pose.position.x = final_path.frenet_points[i].x;
+    transform_pose.position.y = final_path.frenet_points[i].y;
+    transform_pose.orientation = 
+        tf::createQuaternionMsgFromYaw(final_path.frenet_points[1].yaw);
+    controller_sim_pub_.publish(transform_pose);
 }
 }
 void Plan::Loop() {
@@ -85,8 +85,8 @@ void Plan::Loop() {
           global_initial_point = pre_final_path_.frenet_points[3];
         }
 
-        auto initial_frenet_point = GetFrenetPoint(global_initial_point, 
-                                                   ref_path_);
+        auto initial_frenet_point = Cartesian2Frenet(global_initial_point, 
+                                                     ref_path_);
 
         // std::cout << "global initial point: " << global_initial_point.x << ", "
         //           << global_initial_point.y << std::endl;
@@ -101,12 +101,7 @@ void Plan::Loop() {
         FrenetPoint leader_car;
         for (auto& object : collision_detection_ptr->dynamic_obstacle_list_) {
           // std::cout << "test: " << object.point.x << ", " << object.point.y << std::endl; 
-          int frenet_match_index = SearchMatchIndex(object.point.x, 
-                                                    object.point.y, 
-                                                    ref_path_, 0);
-          auto pro_point = GetProjectionPoint(object.point, 
-                                              ref_path_[frenet_match_index]);
-          auto frenet_obs = Cartesian2Frenet(object.point, pro_point);
+          auto frenet_obs = Cartesian2Frenet(object.point, ref_path_);
           if (frenet_obs.s > initial_frenet_point.s && 
               fabs(frenet_obs.l - initial_frenet_point.l) < 2.0 &&
               fabs(frenet_obs.s - initial_frenet_point.s) < 3.0 * common_info_ptr_->cruise_speed_ && 
@@ -140,7 +135,7 @@ void Plan::Loop() {
           
           pre_final_path_ = final_path_;
           history_paths_.push_back(final_path_);
-          visualization_tool_ptr_->SamplePathsVisualization(sample_paths_);
+          // visualization_tool_ptr_->SamplePathsVisualization(sample_paths_);
         }
         else {
           ROS_ERROR("Please set a planner!!!!!!");

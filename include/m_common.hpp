@@ -68,12 +68,7 @@ PathPoint GetProjectionPoint(const FrenetPoint& frenet_point,
  * @return FrenetPoint Frenet坐标系下的点
  */
 FrenetPoint Cartesian2Frenet(const CarState& global_point,
-                             const PathPoint& projection_point);
-/**
- * @brief Get the Frenet Point object 总的计算FrenetPoint的函数
- */
-FrenetPoint GetFrenetPoint(const CarState& global_point, 
-                           const std::vector<PathPoint>& ref_path);
+                             const std::vector<PathPoint>& ref_path);
 /**
  * @brief Frenet坐标系下的点转换到Cartesian坐标系下
  * 

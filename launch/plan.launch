@@ -12,6 +12,6 @@
      <remap from="/final_waypoints" to="/reference_line/local_waypoint" />
   </node>
 
-  <include file="$(find carla_waypoint_publisher)/launch/carla_waypoint_publisher.launch" />
+  <!-- <include file="$(find carla_waypoint_publisher)/launch/carla_waypoint_publisher.launch" /> -->
   <node name="rviz" pkg="rviz" type="rviz" required="True" args="-d $(find auto_drive)/rviz/plan.rviz" />
 </launch>
