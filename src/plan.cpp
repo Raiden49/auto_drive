@@ -2,7 +2,7 @@
  * @Author: Raiden49 
  * @Date: 2024-09-18 20:01:56 
  * @Last Modified by: Raiden49
- * @Last Modified time: 2024-09-25 15:06:51
+ * @Last Modified time: 2024-10-16 12:49:53
  */
 #include "plan.hpp"
 
@@ -59,7 +59,7 @@ void Plan::Loop() {
         else if (EuclideanDis(common_info_ptr_->cur_pose_.x, 
                               common_info_ptr_->cur_pose_.y,
                               pre_final_path_.frenet_points[0].x, 
-                              pre_final_path_.frenet_points[0].y) > 5) {
+                              pre_final_path_.frenet_points[0].y) > 100) {
         // else if (fabs(common_info_ptr_->cur_pose_.x - pre_final_path_.frenet_points[0].x) > 2.0 ||
                 //  fabs(common_info_ptr_->cur_pose_.y - pre_final_path_.frenet_points[0].y) > 0.5) {
           double dt = 0.1;
@@ -85,13 +85,23 @@ void Plan::Loop() {
           global_initial_point = pre_final_path_.frenet_points[3];
         }
 
+        global_initial_point.x = common_info_ptr_->cur_pose_.x;
+        global_initial_point.y = common_info_ptr_->cur_pose_.y;
+        global_initial_point.v = common_info_ptr_->cur_pose_.v;
+
         auto initial_frenet_point = Cartesian2Frenet(global_initial_point, 
                                                      ref_path_);
+        CarState global_goal_point;
+        global_goal_point.x = ref_path_[ref_path_.size() - 5].x;
+        global_goal_point.y = ref_path_[ref_path_.size() - 5].y;
+        global_goal_point.v = 4;
+        auto goal_frenet_point = Cartesian2Frenet(global_goal_point, ref_path_);
 
+        // std::cout << "-------------------initial debug-------------------" << std::endl;
         // std::cout << "global initial point: " << global_initial_point.x << ", "
         //           << global_initial_point.y << std::endl;
-        // std::cout << "initial frenet point: " << initial_frenet_point.l << ", "
-        //           << initial_frenet_point.l_ds << ", " << initial_frenet_point.l_d_ds
+        // std::cout << "initial frenet point: " << initial_frenet_point.s << ", "
+        //           << initial_frenet_point.l << ", " << initial_frenet_point.yaw
         //           << std::endl;
         
         auto collision_detection_ptr = std::make_shared<CollisionDetection>(
@@ -112,6 +122,8 @@ void Plan::Loop() {
           }
         }
 
+        clock_t start_time = clock();
+
         if (planner_method_ == "lattice_planner") {
           lattice_planner_ptr_->collision_detection_ptr_ = collision_detection_ptr;
           sample_paths_ = lattice_planner_ptr_->GetCandidatePaths(
@@ -121,8 +133,6 @@ void Plan::Loop() {
             ROS_ERROR("Lattice planner can't find any valid path");
           }
           final_path_ = sample_paths_[0];
-          pre_final_path_ = final_path_;
-          history_paths_.push_back(final_path_);
           visualization_tool_ptr_->SamplePathsVisualization(sample_paths_);
         }
         else if (planner_method_ == "em_planner") {
@@ -132,30 +142,40 @@ void Plan::Loop() {
           em_planner_ptr_->collision_detection_ptr_ = collision_detection_ptr;
           final_path_ = em_planner_ptr_->Planning(ref_path_, initial_frenet_point);
           sample_paths_ = em_planner_ptr_->GetSamplePath(ref_path_);
-          
-          pre_final_path_ = final_path_;
-          history_paths_.push_back(final_path_);
           // visualization_tool_ptr_->SamplePathsVisualization(sample_paths_);
+        }
+        else if (planner_method_ == "cilqr_planner") {
+          cilqr_planner_ptr_->collision_detection_ptr_ = collision_detection_ptr;
+          final_path_ = cilqr_planner_ptr_->Solve(ref_path_, initial_frenet_point,
+                                                  goal_frenet_point, 
+                                                  common_info_ptr_->cur_pose_.yaw);
+          visualization_tool_ptr_->SamplePathsVisualization(cilqr_planner_ptr_->all_possible_trajs_);
         }
         else {
           ROS_ERROR("Please set a planner!!!!!!");
         }
 
-        std::vector<PathPoint> cartesian_final_path;
-        cartesian_final_path.resize(final_path_.frenet_points.size());
-        for (int i = 0; i < final_path_.frenet_points.size(); i++) {
-          cartesian_final_path[i].x = final_path_.frenet_points[i].x;
-          cartesian_final_path[i].y = final_path_.frenet_points[i].y;
-        }
-        qp_optimer_ptr_ = std::make_shared<optimization::QP>(
-            -0.5, 0.5, 10, 1, 1, cartesian_final_path);
-        auto&& optim_points = qp_optimer_ptr_->Process();
-        for (int i = 0; i < optim_points.size(); i++) {
-          final_path_.frenet_points[i].x = optim_points[i].x;
-          final_path_.frenet_points[i].y = optim_points[i].y;
-        }
+        clock_t end_time = clock();
+        double run_time = (double)(end_time - start_time) * 1000 / CLOCKS_PER_SEC;
 
-        ROS_INFO("Find the best path!!! ,the size is%d", final_path_.size_);
+        pre_final_path_ = final_path_;
+        history_paths_.push_back(final_path_);
+
+        // std::vector<PathPoint> cartesian_final_path;
+        // cartesian_final_path.resize(final_path_.frenet_points.size());
+        // for (int i = 0; i < final_path_.frenet_points.size(); i++) {
+        //   cartesian_final_path[i].x = final_path_.frenet_points[i].x;
+        //   cartesian_final_path[i].y = final_path_.frenet_points[i].y;
+        // }
+        // qp_optimer_ptr_ = std::make_shared<optimization::QP>(
+        //     -0.5, 0.5, 10, 1, 1, cartesian_final_path);
+        // auto&& optim_points = qp_optimer_ptr_->Process();
+        // for (int i = 0; i < optim_points.size(); i++) {
+        //   final_path_.frenet_points[i].x = optim_points[i].x;
+        //   final_path_.frenet_points[i].y = optim_points[i].y;
+        // }
+
+        ROS_INFO("Find the best path!!! ,the size is %d, %f ms time used", final_path_.size_, run_time);
         visualization_tool_ptr_->FinalPathVisualization(final_path_);
         visualization_tool_ptr_->
             ObjectSpeedVisualization(collision_detection_ptr->detected_objects_);

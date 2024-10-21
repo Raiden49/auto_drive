@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.10)
 project(auto_drive)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -16,6 +16,10 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Eigen3 REQUIRED)
 find_package(OsqpEigen REQUIRED)
+find_package(PkgConfig REQUIRED)
+# find_package(CasADi REQUIRED)
+pkg_check_modules(IPOPT REQUIRED ipopt)
+pkg_check_modules(CasADi REQUIRED casadi)
 
 add_message_files(
   DIRECTORY waypoint_msgs 
@@ -48,6 +52,8 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${osqp_INCLUDE_DIRS}
   ${OsqpEigen_INCLUDE_DIRS}
+  ${IPOPT_INCLUDE_DIRS}
+  ${CasADi_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}
@@ -55,6 +61,9 @@ add_library(${PROJECT_NAME}
   src/optim/qp_optim.cpp 
   src/planner/lattice_planner.cpp 
   src/planner/em_planner.cpp
+  src/planner/cilqr_constraints.cpp
+  src/planner/cilqr.cpp
+  src/planner/cilqr_planner.cpp
   src/controller/controller_node.cpp 
   src/controller/controller.cpp 
   src/collision_detection.cpp 
@@ -70,6 +79,8 @@ add_dependencies(${PROJECT_NAME}
 )
 
 add_executable(plan src/main.cpp)
+# add_executable(plan src/planner/cilqr_test.cpp)
+# add_executable(plan src/planner/cilqr_pendulum.cpp)
 
 add_dependencies(plan 
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
@@ -80,6 +91,8 @@ add_dependencies(plan
 target_link_libraries(plan 
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${IPOPT_LIBRARIES}
+  ${CasADi_LIBRARIES}
   OsqpEigen  
 )
 
@@ -94,9 +107,11 @@ add_dependencies(controller
 target_link_libraries(controller 
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${IPOPT_LIBRARIES}
+  ${CasADi_LIBRARIES}
   OsqpEigen 
 )
 
-# install(TARGETS plan
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}  
-# )
+install(TARGETS plan
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}  
+)

@@ -1,5 +1,42 @@
-method: lattice_planner # lattice / em _planner
-# method: em_planner
+method: cilqr_planner # lattice / em _planner
+# method: em_planner, lattice_planner, cilqr_planner
+
+cilqr_planner: {
+  delta_t: 0.1,
+  horizon: 50,
+  num_state: 4,
+  num_control: 2,
+  w_acc: 0.5,
+  w_yaw_rate: 0.5,
+  w_pos_s: 0.5,
+  w_pos_l: 2.0,
+  w_vel: 0.5,
+  q1_acc: 1.0,
+  q2_acc: 1.0,
+  q1_yaw_rate: 1.0,
+  q2_yaw_rate: 1.0,
+  q1_front: 2.75,
+  q2_front: 2.75,
+  q1_rear: 2.5,
+  q2_rear: 2.5,
+  acc_min: -5.0,
+  acc_max: 5.0,
+  steer_min: -1.0,
+  steer_max: 1.0,
+  wheel_base: 2.94,
+  max_speed: 8,
+  t_safe: 0.1,
+  s_safe_length: 1,
+  s_safe_width: 1,
+  car_length: 1,
+  car_width: 1,
+  ego_rad: 2,
+  ego_lf: 1.47, 
+  ego_lr: 1.47,
+  max_iters: 100,
+  tol: 0.01,
+  desired_speed: 5
+}
 
 lattice_planner: {
   sample_max_time: 4.0,

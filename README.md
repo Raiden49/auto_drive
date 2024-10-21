@@ -6,6 +6,8 @@
 - ros-carla-bridge
 - osqp-eigen
 - Eigen
+- casadi
+- ipopt
 
 ### 启动程序
 - 新开终端，启动carla
@@ -13,6 +15,14 @@
 - 新开终端，启动ros-carla-bridge中的 carla_waypoint_publisher.launch
 - 新开终端，在自己的工作空间使用catkin make 或者 cmake编译该仓库 并source
 - roslaunch auto_drive plan.launch
+
+## CiLQR 
+感觉用CiLQR就没必要在S-L坐标系做了，所以打算单开个仓库，还需要调试，尤其是避障还有问题，先简单放一张图吧,用casadi做的，要比Eigen的矩阵运算快很多，而且不用自己写jacobian和hessian矩阵了。
+
+<div align=center>
+<img src="./docs/cilqr.png" alt="lattice planner"/>
+</div>
+
 
 ## lattice planner
 ### 效果演示
@@ -41,6 +51,10 @@
 </div>
 
 ## 更新日志
+### 2024/10/21
+
+添加CiLQR 规划器，仅作示例
+
 ### 2024/10/09
 
 更新注释，添加说明

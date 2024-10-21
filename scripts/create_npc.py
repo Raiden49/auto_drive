@@ -46,7 +46,7 @@ def odometry_callback(msg):
     yaw = euler[2]  # 获取偏航角
 
     # 定义生成车辆的距离
-    distance = 20.0  # 在前方生成 10 米
+    distance = 10.0  # 在前方生成 10 米
 
     # 候选偏移位置
     offsets = [(0, 0)]  # 前方偏移位置

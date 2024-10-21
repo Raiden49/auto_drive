@@ -2,7 +2,7 @@
  * @Author: Raiden49 
  * @Date: 2024-09-14 10:05:57 
  * @Last Modified by: Raiden49
- * @Last Modified time: 2024-09-25 15:06:03
+ * @Last Modified time: 2024-10-17 16:19:04
  */
 #ifndef AUTO_DRIVE_PLAN_HPP_
 #define AUTO_DRIVE_PLAN_HPP_
@@ -10,11 +10,13 @@
 #include <memory> 
 #include <unordered_map>
 #include <ros/ros.h>
+#include <time.h>
 
 #include "visualization.hpp"
 #include "reference_line.hpp"
 #include "planner/lattice_planner.hpp"
 #include "planner/em_planner.hpp"
+#include "planner/cilqr_planner.hpp"
 #include "optim/qp_optim.hpp"
 
 #include "auto_drive/Waypoint.h"
@@ -84,6 +86,42 @@ class Plan {
     ros::param::get("plan/em_planner/qp_cost_end_dl", qp_path_params_["qp_cost_end_dl"]);
     ros::param::get("plan/em_planner/qp_cost_end_ddl", qp_path_params_["qp_cost_end_ddl"]);
     
+    // cilqr params
+    ros::param::get("plan/cilqr_planner/delta_t", cilqr_params_["delta_t"]);
+    ros::param::get("plan/cilqr_planner/horizon", cilqr_params_["horizon"]);
+    ros::param::get("plan/cilqr_planner/num_state", cilqr_params_["num_state"]);
+    ros::param::get("plan/cilqr_planner/num_control", cilqr_params_["num_control"]);
+    ros::param::get("plan/cilqr_planner/w_acc", cilqr_params_["w_acc"]);
+    ros::param::get("plan/cilqr_planner/w_yaw_rate", cilqr_params_["w_yaw_rate"]);
+    ros::param::get("plan/cilqr_planner/w_pos_s", cilqr_params_["w_pos_s"]);
+    ros::param::get("plan/cilqr_planner/w_pos_l", cilqr_params_["w_pos_l"]);
+    ros::param::get("plan/cilqr_planner/w_vel", cilqr_params_["w_vel"]);
+    ros::param::get("plan/cilqr_planner/q1_acc", cilqr_params_["q1_acc"]);
+    ros::param::get("plan/cilqr_planner/q2_acc", cilqr_params_["q2_acc"]);
+    ros::param::get("plan/cilqr_planner/q1_yaw_rate", cilqr_params_["q1_yaw_rate"]);
+    ros::param::get("plan/cilqr_planner/q2_yaw_rate", cilqr_params_["q2_yaw_rate"]);
+    ros::param::get("plan/cilqr_planner/q1_front", cilqr_params_["q1_front"]);
+    ros::param::get("plan/cilqr_planner/q2_front", cilqr_params_["q2_front"]);
+    ros::param::get("plan/cilqr_planner/q1_rear", cilqr_params_["q1_rear"]);
+    ros::param::get("plan/cilqr_planner/q2_rear", cilqr_params_["q2_rear"]);
+    ros::param::get("plan/cilqr_planner/acc_min", cilqr_params_["acc_min"]);
+    ros::param::get("plan/cilqr_planner/acc_max", cilqr_params_["acc_max"]);
+    ros::param::get("plan/cilqr_planner/steer_min", cilqr_params_["steer_min"]);
+    ros::param::get("plan/cilqr_planner/steer_max", cilqr_params_["steer_max"]);
+    ros::param::get("plan/cilqr_planner/wheel_base", cilqr_params_["wheel_base"]);
+    ros::param::get("plan/cilqr_planner/max_speed", cilqr_params_["max_speed"]);
+    ros::param::get("plan/cilqr_planner/t_safe", cilqr_params_["t_safe"]);
+    ros::param::get("plan/cilqr_planner/s_safe_length", cilqr_params_["s_safe_length"]);
+    ros::param::get("plan/cilqr_planner/s_safe_width", cilqr_params_["s_safe_width"]);
+    ros::param::get("plan/cilqr_planner/car_length", cilqr_params_["car_length"]);
+    ros::param::get("plan/cilqr_planner/car_width", cilqr_params_["car_width"]);
+    ros::param::get("plan/cilqr_planner/ego_rad", cilqr_params_["ego_rad"]);
+    ros::param::get("plan/cilqr_planner/ego_lf", cilqr_params_["ego_lf"]);
+    ros::param::get("plan/cilqr_planner/ego_lr", cilqr_params_["ego_lr"]);
+    ros::param::get("plan/cilqr_planner/max_iters", cilqr_params_["max_iters"]);
+    ros::param::get("plan/cilqr_planner/tol", cilqr_params_["tol"]);
+    ros::param::get("plan/cilqr_planner/desired_speed", cilqr_params_["desired_speed"]);
+    
     common_info_ptr_ = std::make_shared<CommonInfo>(role_name_, nh);
     visualization_tool_ptr_ = std::make_shared<VisualizationTool>(nh);
     ref_line_ptr_ = std::make_shared<ReferenceLine>(local_length_,
@@ -92,6 +130,9 @@ class Plan {
         common_info_ptr_->cruise_speed_, lattice_params_, collision_detection_ptr_);
     em_planner_ptr_ = std::make_shared<planner::EMPlanner>(
         dp_path_params_, qp_path_params_, collision_detection_ptr_);
+    cilqr_planner_ptr_ = 
+        std::make_shared<cilqr_planner::CiLQRPlanner>(cilqr_params_, 
+                                                      collision_detection_ptr_);
     local_waypoints_pub_ = nh_.advertise<
         auto_drive::WaypointArray>("final_waypoints", 10); 
     controller_sim_pub_ = nh.advertise<
@@ -110,6 +151,7 @@ class Plan {
   std::shared_ptr<CollisionDetection> collision_detection_ptr_;
   std::shared_ptr<planner::LatticePlanner> lattice_planner_ptr_;
   std::shared_ptr<planner::EMPlanner> em_planner_ptr_;
+  std::shared_ptr<cilqr_planner::CiLQRPlanner> cilqr_planner_ptr_;
   std::shared_ptr<optimization::QP> qp_optimer_ptr_;
 
  private:
@@ -135,6 +177,7 @@ class Plan {
   std::unordered_map<std::string, double> ref_line_params_;
   std::unordered_map<std::string, double> dp_path_params_;
   std::unordered_map<std::string, double> qp_path_params_;
+  std::unordered_map<std::string, double> cilqr_params_;
 };  
 }
 
